@@ -1,0 +1,8 @@
+{
+  "url": "http:\/\/localhost:8123?user=default",
+  "table": "amplihouse.events",
+  "timer": 1,
+  "timeout": 10,
+  "unsentRowsDir": "unsent_rows",
+  "errorLog": "error.log"
+}

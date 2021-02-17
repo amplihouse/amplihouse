@@ -1,0 +1,66 @@
+{
+    "events": {
+        "os_name": {"type": "String", "newName": "os"},
+        "timestamp": {"type": "DateTime", "newName": "t", "sourceFormat":  "timestamp_ms"},
+        "event_type": {"type": "String", "replace": {"regexp":"^(TSEventType|TSEvent)", "newSubstring": ""}, "ignoreList": ["test", "test2"]},
+        "device_id": {"type": "String"},
+        "session_id": {"type": "DateTime", "newName": "session_start", "sourceFormat":  "timestamp_ms"},
+        "version_name": {"type": "String", "newName": "version"},
+        "os_version": {"type": "String"},
+        "device_manufacturer": {"type": "String"},
+        "device_model": {"type": "String"},
+        "carrier": {"type": "String"},
+        "language": {"type": "String"},
+
+        "country": {"type": "String"},
+        "region": {"type": "String"},
+        "city": {"type": "String"},
+        "ip": {"type": "String"}
+    },
+    "users": {
+        "os": {"type": "String", "f": "argMax(os, t)"},
+        "tMin": {"type": "DateTime", "f": "min(t)"},
+        "tMax": {"type": "DateTime", "f": "max(t)"},
+        "events": {"type": "String", "f": "count()"},
+        "device_id": {"type": "String", "f": "argMax(device_id, t)"},
+        "sessions": {"type": "String", "f": "uniq(session_start)"},
+        "version": {"type": "String", "f": "argMax(version, t)"},
+        "os_version": {"type": "String", "f": "argMax(os_version, t)"},
+        "device_manufacturer": {"type": "String", "f": "argMax(device_manufacturer, t)"},
+        "device_model": {"type": "String", "f": "argMax(device_model, t)"},
+        "carrier": {"type": "String", "f": "argMax(carrier, t)"},
+        "language": {"type": "String", "f": "argMax(language, t)"},
+
+        "country": {"type": "String", "f": "argMax(country, t)"},
+        "region": {"type": "String", "f": "argMax(region, t)"},
+        "city": {"type": "String", "f": "argMax(city, t)"},
+        "ip": {"type": "String", "f": "argMax(ip, t)"},
+
+        "ips": {"type": "String", "f": "arrayStringConcat(groupUniqArray(100)(ip), ',')"},
+        "countries": {"type": "String", "f": "arrayStringConcat(groupUniqArray(100)(country), ',')"}
+    },
+    "sessions": {
+        "os": {"type": "String", "f": "argMax(os, t)"},
+        "tMin": {"type": "DateTime", "f": "min(t)"},
+        "tMax": {"type": "DateTime", "f": "max(t)"},
+        "events": {"type": "String", "f": "count()"},
+        "duration": {"type": "String", "f": "max(t)-min(t)"},
+        "device_id": {"type": "String", "f": "argMax(device_id)"},
+        "version": {"type": "String", "f": "argMax(version, t)"},
+        "os_version": {"type": "String", "f": "argMax(os_version, t)"},
+        "device_manufacturer": {"type": "String", "f": "argMax(device_manufacturer, t)"},
+        "device_model": {"type": "String", "f": "argMax(device_model, t)"},
+        "carrier": {"type": "String", "f": "argMax(carrier, t)"},
+        "language": {"type": "String", "f": "argMax(language, t)"},
+
+        "country": {"type": "String", "f": "argMax(country, t)"},
+        "region": {"type": "String", "f": "argMax(region, t)"},
+        "city": {"type": "String", "f": "argMax(city, t)"},
+        "ip": {"type": "String", "f": "argMax(ip, t)"}
+    },
+    "tableTemplates": {
+        "events": "CREATE TABLE amplihouse.events (%columns) Engine MergeTree PARTITION BY (toYYYYMMDD(t), os) ORDER BY (toYYYYMMDD(t), device_id);",
+        "users" : "CREATE TABLE amplihouse.users (%columns) Engine MergeTree PARTITION BY (os) ORDER BY (device_id);",
+        "sessions": "CREATE TABLE amplihouse.sessions (%columns) Engine MergeTree PARTITION BY (toYYYYMMDD(tMin), os) ORDER BY (toYYYYMMDD(tMin), device_id);"
+    }
+}

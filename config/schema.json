@@ -19,7 +19,11 @@
             "country_code": {"type": "String"},
             "region": {"type": "String"},
             "city": {"type": "String"},
-            "ip": {"type": "String"}
+            "ip": {"type": "String"},
+
+            "Connection_Type": {"type": "Nullable(String)", "comment": "custom user property"},
+
+            "_state": {"type": "String", "jsonStringify": true, "comment": "custom event property"}
         }
     },
     "events": {
@@ -42,7 +46,9 @@
             "country_code": {"type": "String"},
             "region": {"type": "String"},
             "city": {"type": "String"},
-            "ip": {"type": "String"}
+            "ip": {"type": "String"},
+
+            "_state": {"type": "String", "jsonStringify": true}
         }
     },
     "raw_to_events": {
@@ -65,7 +71,9 @@
             "country_code": {},
             "region": {},
             "city": {},
-            "ip": {}
+            "ip": {},
+
+            "_state": {}
         },
         "tableSchema": "events"
     },
@@ -95,7 +103,9 @@
             "last_city": {"type": "SimpleAggregateFunction(anyLast, String)"},
             "last_ip": {"type": "SimpleAggregateFunction(anyLast, String)"},
 
-            "countries": {"type": "SimpleAggregateFunction(groupUniqArrayArray, Array(String))"}
+            "countries": {"type": "SimpleAggregateFunction(groupUniqArrayArray, Array(String))"},
+
+            "last_Connection_Type": {"type": "SimpleAggregateFunction(anyLast, Nullable(String))"}
         }
     },
     "raw_to_raw_users": {
@@ -124,7 +134,9 @@
             "last_city": {"query": "anyLast(city)"},
             "last_ip": {"query": "anyLast(ip)"},
 
-            "countries": {"query": "groupUniqArray(country)"}
+            "countries": {"query": "groupUniqArray(country)"},
+
+            "last_Connection_Type": {"query": "anyLast(Connection_Type)"}
         },
         "tableSchema": "raw_users"
     },
@@ -152,7 +164,9 @@
             "region": {"query": "anyLast(last_region)"},
             "city": {"query": "anyLast(last_city)"},
             "ip": {"query": "anyLast(last_ip)"},
-            "countries": {"query": "toString(groupUniqArrayArray(countries))"}
+            "countries": {"query": "toString(groupUniqArrayArray(countries))"},
+
+            "Connection_Type": {"query": "anyLast(last_Connection_Type)"}
         },
         "tableSchema": "raw_users"
     },

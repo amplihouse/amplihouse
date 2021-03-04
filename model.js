@@ -5,11 +5,36 @@ const schema = JSON.parse(fs.readFileSync('config/schema.json'));
 exports.createRow = createRow;
 
 function createRow(row) {
+    if (row.event_properties && typeof row.event_properties === 'object') {
+        for (let name in row.event_properties) {
+            let newName = '_'+name.replace(/[^a-zA-Z0-9]+/g, '_');
+            if (!row[newName]) {
+                row[newName] = row.event_properties[name];
+            }
+        }
+    }
+
+    if (row.user_properties && typeof row.user_properties === 'object') {
+        for (let command in row.user_properties) {
+            for (let name in row.user_properties[command]) {
+                let newName = name.replace(/[^a-zA-Z0-9]+/g, '_');
+                if (!row[newName]) {
+                    row[newName] = row.user_properties[command][name];
+                }
+            }
+        }
+    }
+
     for (let metric in row) {
         let metricParams = schema.raw.columns[metric];
         if (!metricParams) {
+            // console.log(metric+'='+JSON.stringify(row[metric]));
             delete row[metric];
         } else {
+            if (metricParams.jsonStringify) {
+                row[metric] = JSON.stringify(row[metric]);
+            }
+
             if (metricParams.type.includes('Int')) {
                 row[metric] = parseInt(row[metric]);
             } else if (metricParams.type.includes('Float')) {

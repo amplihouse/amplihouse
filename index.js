@@ -39,6 +39,7 @@ if (cluster.isMaster) {
 
             for (let i in events) {
                 events[i]['country'] = req.headers.geoip_country_name ?? '';
+                events[i]['country_code'] = req.headers.geoip_country_code ?? '';
                 events[i]['region'] = req.headers.geoip_region_name ?? '';
                 events[i]['city'] = req.headers.geoip_city_name ?? '';
                 model.createRow(events[i]);

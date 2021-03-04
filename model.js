@@ -6,16 +6,17 @@ exports.createRow = createRow;
 
 function createRow(row) {
     for (let metric in row) {
-        if (!schema['events'][metric]) {
+        let metricParams = schema.raw.columns[metric];
+        if (!metricParams) {
             delete row[metric];
         } else {
-            if (schema['events'][metric].type.includes('Int')) {
+            if (metricParams.type.includes('Int')) {
                 row[metric] = parseInt(row[metric]);
-            } else if (schema['events'][metric].type.includes('Float')) {
+            } else if (metricParams.type.includes('Float')) {
                 row[metric] = parseFloat(row[metric]);
-            } else if (schema['events'][metric].type.includes('DateTime')) {
+            } else if (metricParams.type.includes('DateTime')) {
                 let time;
-                if (schema['events'][metric].sourceFormat && schema['events'][metric].sourceFormat === 'timestamp_ms') {
+                if (metricParams.sourceFormat && metricParams.sourceFormat === 'timestamp_ms') {
                     time = new Date(parseInt(row[metric]));
                 } else {
                     time = new Date(row[metric]);
@@ -25,17 +26,17 @@ function createRow(row) {
                 row[metric] = row[metric].toString();
             }
 
-            if (schema['events'][metric].replace && schema['events'][metric].replace) {
-                let re = new RegExp(schema['events'][metric].replace.regexp);
-                row[metric] = row[metric].replace(re, schema['events'][metric].replace.newSubstring);
+            if (metricParams.replace && metricParams.replace) {
+                let re = new RegExp(metricParams.replace.regexp);
+                row[metric] = row[metric].replace(re, metricParams.replace.newSubstring);
             }
 
-            if (schema['events'][metric].newName) {
-                row[schema['events'][metric].newName] = row[metric];
+            if (metricParams.newName) {
+                row[metricParams.newName] = row[metric];
                 delete row[metric];
             }
 
-            if (schema['events'][metric].ignoreList && schema['events'][metric].ignoreList.includes(row[metric])) {
+            if (metricParams.ignoreList && metricParams.ignoreList.includes(row[metric])) {
                 return;
             }
         }

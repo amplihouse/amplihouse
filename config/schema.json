@@ -1,66 +1,308 @@
 {
-    "events": {
-        "os_name": {"type": "String", "newName": "os"},
-        "timestamp": {"type": "DateTime", "newName": "t", "sourceFormat":  "timestamp_ms"},
-        "event_type": {"type": "String", "replace": {"regexp":"^(TSEventType|TSEvent)", "newSubstring": ""}, "ignoreList": ["test", "test2"]},
-        "device_id": {"type": "String"},
-        "session_id": {"type": "DateTime", "newName": "session_start", "sourceFormat":  "timestamp_ms"},
-        "version_name": {"type": "String", "newName": "version"},
-        "os_version": {"type": "String"},
-        "device_manufacturer": {"type": "String"},
-        "device_model": {"type": "String"},
-        "carrier": {"type": "String"},
-        "language": {"type": "String"},
+    "raw": {
+        "template": "CREATE TABLE amplihouse.raw (%columns) Engine MergeTree ORDER BY (t);",
+        "type": "table",
+        "columns": {
+            "os_name": {"type": "String", "newName": "os"},
+            "device_id": {"type": "String"},
+            "timestamp": {"type": "DateTime", "newName": "t", "sourceFormat":  "timestamp_ms"},
+            "event_type": {"type": "String", "replace": {"regexp":"^(TSEventType|TSEvent)", "newSubstring": ""}, "ignoreList": ["test", "test2"]},
+            "session_id": {"type": "DateTime", "newName": "session_start", "sourceFormat":  "timestamp_ms"},
+            "version_name": {"type": "String", "newName": "version"},
+            "os_version": {"type": "String"},
+            "device_manufacturer": {"type": "String"},
+            "device_model": {"type": "String"},
+            "carrier": {"type": "String"},
+            "language": {"type": "String"},
 
-        "country": {"type": "String"},
-        "region": {"type": "String"},
-        "city": {"type": "String"},
-        "ip": {"type": "String"}
+            "country": {"type": "String"},
+            "country_code": {"type": "String"},
+            "region": {"type": "String"},
+            "city": {"type": "String"},
+            "ip": {"type": "String"}
+        }
+    },
+    "events": {
+        "template": "CREATE TABLE amplihouse.events (%columns) Engine MergeTree PARTITION BY (os, toYYYYMMDD(t)) ORDER BY (device_id);",
+        "type": "table",
+        "columns": {
+            "os": {"type": "String"},
+            "device_id": {"type": "String"},
+            "t": {"type": "DateTime"},
+            "event_type": {"type": "String"},
+            "session_start": {"type": "DateTime"},
+            "version": {"type": "String"},
+            "os_version": {"type": "String"},
+            "device_manufacturer": {"type": "String"},
+            "device_model": {"type": "String"},
+            "carrier": {"type": "String"},
+            "language": {"type": "String"},
+
+            "country": {"type": "String"},
+            "country_code": {"type": "String"},
+            "region": {"type": "String"},
+            "city": {"type": "String"},
+            "ip": {"type": "String"}
+        }
+    },
+    "raw_to_events": {
+        "template": "CREATE MATERIALIZED VIEW amplihouse.raw_to_events TO amplihouse.events AS SELECT %queries FROM amplihouse.raw;",
+        "type": "matview",
+        "columns": {
+            "os": {},
+            "device_id": {},
+            "t": {},
+            "event_type": {},
+            "session_start": {},
+            "version": {},
+            "os_version": {},
+            "device_manufacturer": {},
+            "device_model": {},
+            "carrier": {},
+            "language": {},
+
+            "country": {},
+            "country_code": {},
+            "region": {},
+            "city": {},
+            "ip": {}
+        },
+        "tableSchema": "events"
+    },
+    "raw_users": {
+        "template": "CREATE TABLE amplihouse.raw_users (%columns) Engine AggregatingMergeTree PARTITION BY (os) ORDER BY (device_id);",
+        "type": "table",
+        "columns": {
+            "os": {"type": "String"},
+            "device_id": {"type": "String"},
+            "start": {"type": "SimpleAggregateFunction(min, DateTime)"},
+            "end": {"type": "SimpleAggregateFunction(max, DateTime)"},
+            "events": {"type": "SimpleAggregateFunction(sum, UInt64)"},
+            "sessions": {"type": "SimpleAggregateFunction(groupUniqArrayArray, Array(DateTime))"},
+            "days": {"type": "SimpleAggregateFunction(groupUniqArrayArray, Array(Date))"},
+            "start_version": {"type": "SimpleAggregateFunction(min, String)"},
+
+            "last_version": {"type": "SimpleAggregateFunction(anyLast, String)"},
+            "last_os_version": {"type": "SimpleAggregateFunction(anyLast, String)"},
+            "last_device_manufacturer": {"type": "SimpleAggregateFunction(anyLast, String)"},
+            "last_device_model": {"type": "SimpleAggregateFunction(anyLast, String)"},
+            "last_carrier": {"type": "SimpleAggregateFunction(anyLast, String)"},
+            "last_language": {"type": "SimpleAggregateFunction(anyLast, String)"},
+
+            "last_country": {"type": "SimpleAggregateFunction(anyLast, String)"},
+            "last_country_code": {"type": "SimpleAggregateFunction(anyLast, String)"},
+            "last_region": {"type": "SimpleAggregateFunction(anyLast, String)"},
+            "last_city": {"type": "SimpleAggregateFunction(anyLast, String)"},
+            "last_ip": {"type": "SimpleAggregateFunction(anyLast, String)"},
+
+            "countries": {"type": "SimpleAggregateFunction(groupUniqArrayArray, Array(String))"}
+        }
+    },
+    "raw_to_raw_users": {
+        "template": "CREATE MATERIALIZED VIEW amplihouse.raw_to_raw_users TO amplihouse.raw_users AS SELECT %queries FROM amplihouse.raw GROUP BY os, device_id;",
+        "type": "matview",
+        "columns": {
+            "os": {},
+            "device_id": {},
+            "start": {"query": "min(t)"},
+            "end": {"query": "max(t)"},
+            "events": {"query": "count()"},
+            "sessions": {"query": "groupUniqArray(session_start)"},
+            "days": {"query": "groupUniqArray(toDate(t))"},
+            "start_version": {"query": "min(version)"},
+
+            "last_device_manufacturer": {"query": "anyLast(device_manufacturer)"},
+            "last_device_model": {"query": "anyLast(device_model)"},
+            "last_version": {"query": "anyLast(version)"},
+            "last_os_version": {"query": "anyLast(os_version)"},
+            "last_carrier": {"query": "anyLast(carrier)"},
+            "last_language": {"query": "anyLast(language)"},
+
+            "last_country": {"query": "anyLast(country)"},
+            "last_country_code": {"query": "anyLast(country_code)"},
+            "last_region": {"query": "anyLast(region)"},
+            "last_city": {"query": "anyLast(city)"},
+            "last_ip": {"query": "anyLast(ip)"},
+
+            "countries": {"query": "groupUniqArray(country)"}
+        },
+        "tableSchema": "raw_users"
     },
     "users": {
-        "os": {"type": "String", "f": "argMax(os, t)"},
-        "tMin": {"type": "DateTime", "f": "min(t)"},
-        "tMax": {"type": "DateTime", "f": "max(t)"},
-        "events": {"type": "String", "f": "count()"},
-        "device_id": {"type": "String", "f": "argMax(device_id, t)"},
-        "sessions": {"type": "String", "f": "uniq(session_start)"},
-        "version": {"type": "String", "f": "argMax(version, t)"},
-        "os_version": {"type": "String", "f": "argMax(os_version, t)"},
-        "device_manufacturer": {"type": "String", "f": "argMax(device_manufacturer, t)"},
-        "device_model": {"type": "String", "f": "argMax(device_model, t)"},
-        "carrier": {"type": "String", "f": "argMax(carrier, t)"},
-        "language": {"type": "String", "f": "argMax(language, t)"},
+        "template": "CREATE OR REPLACE VIEW amplihouse.users AS SELECT %queries FROM amplihouse.raw_users GROUP BY os, device_id;",
+        "type": "view",
+        "columns": {
+            "os": {},
+            "device_id": {},
+            "start": {"query": "min(start)"},
+            "end": {"query": "max(end)"},
+            "events": {"query": "sum(events)"},
+            "sessions": {"query": "uniqArray(sessions)"},
+            "days": {"query": "uniqArray(days)"},
+            "version": {"query": "anyLast(last_version)"},
+            "start_version": {"query": "min(start_version)"},
+            "os_version": {"query": "anyLast(last_os_version)"},
+            "device_manufacturer": {"query": "anyLast(last_device_manufacturer)"},
+            "device_model": {"query": "anyLast(last_device_model)"},
+            "carrier": {"query": "anyLast(last_carrier)"},
+            "language": {"query": "anyLast(last_language)"},
 
-        "country": {"type": "String", "f": "argMax(country, t)"},
-        "region": {"type": "String", "f": "argMax(region, t)"},
-        "city": {"type": "String", "f": "argMax(city, t)"},
-        "ip": {"type": "String", "f": "argMax(ip, t)"},
+            "country": {"query": "anyLast(last_country)"},
+            "country_code": {"query": "anyLast(last_country_code)"},
+            "region": {"query": "anyLast(last_region)"},
+            "city": {"query": "anyLast(last_city)"},
+            "ip": {"query": "anyLast(last_ip)"},
+            "countries": {"query": "toString(groupUniqArrayArray(countries))"}
+        },
+        "tableSchema": "raw_users"
+    },
+    "raw_sessions": {
+        "template": "CREATE TABLE amplihouse.raw_sessions (%columns) Engine AggregatingMergeTree PARTITION BY (os, toYYYYMMDD(session_start)) ORDER BY (device_id);",
+        "type": "table",
+        "columns": {
+            "os": {"type": "String"},
+            "device_id": {"type": "String"},
+            "session_start": {"type": "DateTime"},
+            "session_end": {"type": "SimpleAggregateFunction(max, DateTime)"},
+            "events": {"type": "SimpleAggregateFunction(sum, UInt64)"},
+            "duration": {"type": "SimpleAggregateFunction(max, String)"},
+            "version": {"type": "SimpleAggregateFunction(anyLast, String)"},
+            "os_version": {"type": "SimpleAggregateFunction(anyLast, String)"},
+            "device_manufacturer": {"type": "SimpleAggregateFunction(anyLast, String)"},
+            "device_model": {"type": "SimpleAggregateFunction(anyLast, String)"},
+            "carrier": {"type": "SimpleAggregateFunction(anyLast, String)"},
+            "language": {"type": "SimpleAggregateFunction(anyLast, String)"},
 
-        "ips": {"type": "String", "f": "arrayStringConcat(groupUniqArray(100)(ip), ',')"},
-        "countries": {"type": "String", "f": "arrayStringConcat(groupUniqArray(100)(country), ',')"}
+            "country": {"type": "SimpleAggregateFunction(anyLast, String)"},
+            "country_code": {"type": "SimpleAggregateFunction(anyLast, String)"},
+            "region": {"type": "SimpleAggregateFunction(anyLast, String)"},
+            "city": {"type": "SimpleAggregateFunction(anyLast, String)"},
+            "ip": {"type": "SimpleAggregateFunction(anyLast, String)"}
+        }
+    },
+    "raw_to_raw_sessions": {
+        "template": "CREATE MATERIALIZED VIEW amplihouse.raw_to_raw_sessions TO amplihouse.raw_sessions AS SELECT %queries FROM amplihouse.raw GROUP BY os, device_id, session_start;",
+        "type": "matview",
+        "columns": {
+            "os": {},
+            "device_id": {},
+            "session_start": {},
+            "session_end": {"query": "max(t)"},
+            "events": {"query": "count()"},
+            "duration": {"query": "max(t-session_start)"},
+            "version": {"query": "anyLast(version)"},
+            "os_version": {"query": "anyLast(os_version)"},
+            "device_manufacturer": {"query": "anyLast(device_manufacturer)"},
+            "device_model": {"query": "anyLast(device_model)"},
+            "carrier": {"query": "anyLast(carrier)"},
+            "language": {"query": "anyLast(language)"},
+
+            "country": {"query": "anyLast(country)"},
+            "country_code": {"query": "anyLast(country_code)"},
+            "region": {"query": "anyLast(region)"},
+            "city": {"query": "anyLast(city)"},
+            "ip": {"query": "anyLast(ip)"}
+        },
+        "tableSchema": "raw_sessions"
     },
     "sessions": {
-        "os": {"type": "String", "f": "argMax(os, t)"},
-        "tMin": {"type": "DateTime", "f": "min(t)"},
-        "tMax": {"type": "DateTime", "f": "max(t)"},
-        "events": {"type": "String", "f": "count()"},
-        "duration": {"type": "String", "f": "max(t)-min(t)"},
-        "device_id": {"type": "String", "f": "argMax(device_id)"},
-        "version": {"type": "String", "f": "argMax(version, t)"},
-        "os_version": {"type": "String", "f": "argMax(os_version, t)"},
-        "device_manufacturer": {"type": "String", "f": "argMax(device_manufacturer, t)"},
-        "device_model": {"type": "String", "f": "argMax(device_model, t)"},
-        "carrier": {"type": "String", "f": "argMax(carrier, t)"},
-        "language": {"type": "String", "f": "argMax(language, t)"},
+        "template": "CREATE OR REPLACE VIEW amplihouse.sessions AS SELECT %queries FROM amplihouse.raw_sessions GROUP BY os, device_id, session_start;",
+        "type": "view",
+        "columns": {
+            "os": {},
+            "device_id": {},
+            "session_start": {},
+            "session_end": {"query": "max(session_end)"},
+            "events": {"query": "sum(events)"},
+            "duration": {"query": "max(duration)"},
+            "version": {"query": "anyLast(version)"},
+            "os_version": {"query": "anyLast(os_version)"},
+            "device_manufacturer": {"query": "anyLast(device_manufacturer)"},
+            "device_model": {"query": "anyLast(device_model)"},
+            "carrier": {"query": "anyLast(carrier)"},
+            "language": {"query": "anyLast(language)"},
 
-        "country": {"type": "String", "f": "argMax(country, t)"},
-        "region": {"type": "String", "f": "argMax(region, t)"},
-        "city": {"type": "String", "f": "argMax(city, t)"},
-        "ip": {"type": "String", "f": "argMax(ip, t)"}
+            "country": {"query": "anyLast(country)"},
+            "country_code": {"query": "anyLast(country_code)"},
+            "region": {"query": "anyLast(region)"},
+            "city": {"query": "anyLast(city)"},
+            "ip": {"query": "anyLast(ip)"}
+        },
+        "tableSchema": "raw_sessions"
     },
-    "tableTemplates": {
-        "events": "CREATE TABLE amplihouse.events (%columns) Engine MergeTree PARTITION BY (toYYYYMMDD(t), os) ORDER BY (toYYYYMMDD(t), device_id);",
-        "users" : "CREATE TABLE amplihouse.users (%columns) Engine MergeTree PARTITION BY (os) ORDER BY (device_id);",
-        "sessions": "CREATE TABLE amplihouse.sessions (%columns) Engine MergeTree PARTITION BY (toYYYYMMDD(tMin), os) ORDER BY (toYYYYMMDD(tMin), device_id);"
+    "raw_users_by_days": {
+        "template": "CREATE TABLE amplihouse.raw_users_by_days (%columns) Engine AggregatingMergeTree PARTITION BY (os, day) ORDER BY (device_id);",
+        "type": "table",
+        "columns": {
+            "os": {"type": "String"},
+            "device_id": {"type": "String"},
+            "day": {"type": "Date"},
+            "events": {"type": "SimpleAggregateFunction(sum, UInt64)"},
+            "sessions": {"type": "SimpleAggregateFunction(groupUniqArrayArray, Array(DateTime))"},
+            "start_version": {"type": "SimpleAggregateFunction(min, String)"},
+
+            "last_version": {"type": "SimpleAggregateFunction(anyLast, String)"},
+            "last_os_version": {"type": "SimpleAggregateFunction(anyLast, String)"},
+            "last_device_manufacturer": {"type": "SimpleAggregateFunction(anyLast, String)"},
+            "last_device_model": {"type": "SimpleAggregateFunction(anyLast, String)"},
+            "last_carrier": {"type": "SimpleAggregateFunction(anyLast, String)"},
+            "last_language": {"type": "SimpleAggregateFunction(anyLast, String)"},
+
+            "last_country": {"type": "SimpleAggregateFunction(anyLast, String)"},
+            "last_country_code": {"type": "SimpleAggregateFunction(anyLast, String)"},
+            "last_region": {"type": "SimpleAggregateFunction(anyLast, String)"},
+            "last_city": {"type": "SimpleAggregateFunction(anyLast, String)"},
+            "last_ip": {"type": "SimpleAggregateFunction(anyLast, String)"}
+        }
+    },
+    "raw_to_raw_users_by_days": {
+        "template": "CREATE MATERIALIZED VIEW amplihouse.raw_to_raw_users_by_days TO amplihouse.raw_users_by_days AS SELECT %queries FROM amplihouse.raw LEFT JOIN amplihouse.users on (amplihouse.raw.os = amplihouse.users.os AND amplihouse.raw.device_id = amplihouse.users.device_id) GROUP BY os, device_id, day;",
+        "type": "matview",
+        "columns": {
+            "os": {},
+            "device_id": {},
+            "day": {"query": "toDate(t)"},
+            "events": {"query": "count()"},
+            "sessions": {"query": "groupUniqArray(session_start)"},
+            "start_version": {"query": "min(if(amplihouse.users.start_version='', version, amplihouse.users.start_version))"},
+            "last_version": {"query": "anyLast(version)"},
+            "last_os_version": {"query": "anyLast(os_version)"},
+            "last_device_manufacturer": {"query": "anyLast(device_manufacturer)"},
+            "last_device_model": {"query": "anyLast(device_model)"},
+            "last_carrier": {"query": "anyLast(carrier)"},
+            "last_language": {"query": "anyLast(language)"},
+
+            "last_country": {"query": "anyLast(country)"},
+            "last_country_code": {"query": "anyLast(country_code)"},
+            "last_region": {"query": "anyLast(region)"},
+            "last_city": {"query": "anyLast(city)"},
+            "last_ip": {"query": "anyLast(ip)"}
+        },
+        "tableSchema": "raw_users_by_days"
+    },
+    "users_by_days": {
+        "template": "CREATE OR REPLACE VIEW amplihouse.users_by_days AS SELECT %queries FROM amplihouse.raw_users_by_days GROUP BY os, device_id, day;",
+        "type": "view",
+        "columns": {
+            "os": {},
+            "device_id": {},
+            "day": {},
+            "events": {"query": "sum(events)"},
+            "sessions": {"query": "uniqArray(sessions)"},
+            "start_version": {"query": "min(start_version)"},
+            "version": {"query": "anyLast(last_version)"},
+            "os_version": {"query": "anyLast(last_os_version)"},
+            "device_manufacturer": {"query": "anyLast(last_device_manufacturer)"},
+            "device_model": {"query": "anyLast(last_device_model)"},
+            "carrier": {"query": "anyLast(last_carrier)"},
+            "language": {"query": "anyLast(last_language)"},
+
+            "country": {"query": "anyLast(last_country)"},
+            "country_code": {"query": "anyLast(last_country_code)"},
+            "region": {"query": "anyLast(last_region)"},
+            "city": {"query": "anyLast(last_city)"},
+            "ip": {"query": "anyLast(last_ip)"}
+        },
+        "tableSchema": "raw_users_by_days"
     }
 }

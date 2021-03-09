@@ -51,7 +51,7 @@ function createRow(row) {
                 row[metric] = row[metric].toString();
             }
 
-            if (metricParams.replace && metricParams.replace) {
+            if (metricParams.replace && metricParams.replace.regexp) {
                 let re = new RegExp(metricParams.replace.regexp);
                 row[metric] = row[metric].replace(re, metricParams.replace.newSubstring);
             }

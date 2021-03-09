@@ -1,0 +1,22 @@
+{
+    "name": "amplihouse/amplihouse",
+    "description": "simple server for amplitude sdk with storage in clickhouse",
+    "keywords": ["amplihouse", "amplitude", "server", "clickhouse", "workerman", "php"],
+    "version": "1.0.1",
+    "license": "MIT",
+    "homepage": "https://github.com/amplihouse/amplihouse",
+    "authors": [
+        {
+            "name": "morozovsk",
+            "homepage": "https://github.com/morozovsk",
+            "role": "Developer"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/amplihouse/amplihouse/issues",
+        "source": "https://github.com/amplihouse/amplihouse"
+    },
+    "require": {
+        "workerman/workerman": "^4.0"
+    }
+}

@@ -7,11 +7,12 @@
 - `cd /opt`
 - `git clone https://github.com/amplihouse/amplihouse.git`
 - `cd amplihouse`
-- `node utils/schema.js | clickhouse-client`
+- `php schema.php`
+- `composer install`
 - change apiUrl in your sdk
 
 ##### Usage
-- `node index.js`
+- `php index.php start`
 
 ##### Systemd autostart script
 - `sudo cp amplihouse.service /usr/lib/systemd/system/amplihouse.service`

@@ -1,5 +1,6 @@
 {
   "host": "127.0.0.1",
   "port": 9011,
-  "forks": 1
+  "localPort": 9012,
+  "forks": 2
 }

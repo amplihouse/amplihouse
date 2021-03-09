@@ -1,17 +1,14 @@
-amplihouse
+[Unit]
 Description=amplihouse
 After=network.target
 
 [Service]
 User=www-data
 WorkingDirectory=/opt/amplihouse
-ExecStart=/usr/bin/node index.js
+ExecStart=/usr/bin/php index.php start
 
 Restart=always
 RestartSec=10
-
-#MemoryLimit=500M
-#MemoryAccounting=true
 
 [Install]
 WantedBy=multi-user.target

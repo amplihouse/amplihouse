@@ -14,7 +14,7 @@ $chWorker->onMessage = function($connection, $data) use (&$rows)
 $chWorker->onWorkerStop = $chWorker->onWorkerReload = function() use (&$rows, $config)
 {
     if ($rows) {
-        file_put_contents($config['unsentRowsDir'] . '/' . date('Y-m-d_H:i:00') . '.gz', gzencode($rows) , FILE_APPEND | LOCK_EX);
+        file_put_contents($config['unsentRowsDir'] . '/' . date('Y-m-d_H:i:s') . '.gz', gzencode($rows) , FILE_APPEND | LOCK_EX);
         $rows = '';
     }
 };

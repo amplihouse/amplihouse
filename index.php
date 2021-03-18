@@ -1,9 +1,10 @@
 <?php
 
 use Workerman\Worker;
-use Workerman\Lib\Timer;
 
 require_once __DIR__ . '/vendor/autoload.php';
+
+include "schema.php";
 
 $config = json_decode(file_get_contents('config/server.json'), true);
 

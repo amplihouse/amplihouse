@@ -18,7 +18,13 @@ Class Clickhouse
 
     function execute($query)
     {
-        return !$this->query($query);
+        $e = $this->query($query);
+        if ($e) {
+            $error = date('Y-m-d H:i:s') . ': Clickhouse->execute($query): ' . $e;
+            echo "$error\n";
+            file_put_contents($this->config['errorLog'], $error, FILE_APPEND | LOCK_EX);
+        }
+        return !$e;
     }
 
     function insert($row)
@@ -90,7 +96,7 @@ Class Schema
                 $this->createTable($i);
             }
 
-            $this->schemaLock = $this->schema;
+            $this->lock = $this->schema;
         } elseif ($this->schema != $this->lock) {
             foreach ($this->schema as $table => $tableConfig) {
                 if (!isset($this->lock[$table])) {

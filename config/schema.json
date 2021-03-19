@@ -5,9 +5,9 @@
         "columns": {
             "os_name": {"type": "String", "newName": "os"},
             "device_id": {"type": "String"},
-            "timestamp": {"type": "DateTime", "newName": "t", "sourceFormat":  "timestamp_ms"},
-            "event_type": {"type": "String", "replace": {"regexp":"^(TSEventType|TSEvent)", "newSubstring": ""}, "ignoreList": ["test", "test2"]},
-            "session_id": {"type": "DateTime", "newName": "session_start", "sourceFormat":  "timestamp_ms"},
+            "timestamp": {"type": "DateTime", "newName": "t",  "fromTimestampMS": true},
+            "event_type": {"type": "String", "fromTimestampMS": true, "replace": {"regexp":"^(TSEventType|TSEvent)", "newSubstring": ""}, "ignoreList": ["test", "test2"]},
+            "session_id": {"type": "DateTime", "newName": "session_start", "fromTimestampMS": true},
             "version_name": {"type": "String", "newName": "version"},
             "os_version": {"type": "String"},
             "device_manufacturer": {"type": "String"},
@@ -23,7 +23,7 @@
 
             "Connection_Type": {"type": "Nullable(String)", "comment": "custom user property"},
 
-            "_state": {"type": "String", "jsonStringify": true, "comment": "custom event property"}
+            "_state": {"type": "String", "json_encode": true, "comment": "custom event property"}
         }
     },
     "events": {

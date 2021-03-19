@@ -43,7 +43,7 @@ $httpWorker->onMessage = function($connection, $request) use ($chConnection, $sc
             $row = [];
             foreach ($event as $metric => &$value) {
                 if ($metricParams = $schema['raw']['columns'][$metric]??null) {
-                    if (!empty($metricParams['jsonStringify'])) {
+                    if (!empty($metricParams['json_encode'])) {
                         $value = json_encode($value);
                     }
 
@@ -52,7 +52,7 @@ $httpWorker->onMessage = function($connection, $request) use ($chConnection, $sc
                     } else if (strpos($metricParams['type'], 'Float') !== false) {
                         $value = floatval($value);
                     } else if (strpos($metricParams['type'], 'DateTime') !== false) {
-                        if ($metricParams['sourceFormat'] && $metricParams['sourceFormat'] === 'timestamp_ms') {
+                        if (!empty($metricParams['fromTimestampMS'])) {
                             $value = date('Y-m-d H:i:s', intval($value/1000));
                         } else {
                             $value = date('Y-m-d H:i:s', strtotime($value));
